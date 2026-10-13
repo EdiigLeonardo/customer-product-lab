@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: position-service
+  datasource:
+    url: jdbc:h2:mem:positions;DB_CLOSE_DELAY=-1
+    hikari:
+      pool-name: positions-pool
+      maximum-pool-size: 5          # deliberately small for the lab
+      connection-timeout: 3000      # ms a request waits for a free connection
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create
+
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 50
+    mbeanregistry:
+      enabled: true            # exposes tomcat_threads_* metrics
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Lab only! Exposing all of these publicly in production is a security problem (see Part D).
+        include: health,info,metrics,prometheus,loggers,threaddump,heapdump,env,configprops,mappings
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true                # /actuator/health/liveness and /actuator/health/readiness
+      group:
+        readiness:
+          include: readinessState,db,marketData
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true   # needed for p95/p99 in Prometheus
+        positions.summary: true
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+
+info:
+  app:
+    team: Production Support Lab
+    owner: you
+
+logging:
+  level:
+    root: INFO
+    com.lab.positions: INFO
